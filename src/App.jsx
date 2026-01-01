@@ -1,16 +1,15 @@
 import "./App.css";
 
-// import LanguageDetector from "@/components/LanguageDetector";
+import LanguageDetector from "@/components/LanguageDetector";
 import Translator from "@/components/Translator";
+import Summarizer from "@/components/Summarizer";
 
 function App() {
   return (
     <>
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-        Language Detector
-      </h2>
-      {/* <LanguageDetector /> */}
+      <LanguageDetector />
       <Translator />
+      <Summarizer />
     </>
   );
 }
