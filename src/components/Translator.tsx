@@ -30,7 +30,7 @@ function Translator() {
         translatorRef.current = await getTranslator(
           "en",
           "ko",
-          abortControllerRef.current.signal
+          abortControllerRef.current.signal,
         );
       }
 
@@ -64,7 +64,9 @@ function Translator() {
         <div className="w-100">
           <h3 className="text-lg font-semibold mb-2">번역 결과</h3>
           <div className="p-4 border h-40 border-gray-300 rounded-lg bg-gray-50">
-            <p>{translatedText}</p>
+            <div className="text-black text-sm whitespace-pre-wrap">
+              {translatedText}
+            </div>
           </div>
         </div>
       </div>
