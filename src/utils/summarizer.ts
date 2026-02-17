@@ -1,13 +1,3 @@
-export interface SummarizerOptions {
-  type?: "key-points" | "tldr" | "teaser" | "headline";
-  format?: "markdown" | "plain-text";
-  length?: "short" | "medium" | "long";
-  sharedContext?: string;
-  expectedInputLanguages?: string[];
-  outputLanguage?: string;
-  expectedContextLanguages?: string[];
-}
-
 export const getSummarizer = async () => {
   const isBrowserSupported = "Summarizer" in self;
   if (!isBrowserSupported) {

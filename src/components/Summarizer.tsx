@@ -23,54 +23,52 @@ function Summarizer() {
 
     const formData = new FormData(e.target as HTMLFormElement);
     const text = formData.get("text") as string;
+    const abortController = new AbortController();
     if (!text.trim()) {
       return;
     }
 
-    try {
-      setIsLoading(true);
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
+    abortControllerRef.current = abortController;
+    setIsLoading(true);
+
+    try {
       if (!summarizerRef.current) {
         summarizerRef.current = await getSummarizer();
       }
 
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
-
       if (USE_STREAMING) {
-        await summarizeStreaming(text);
+        await summarizeStreaming(text, abortController.signal);
       } else {
-        await summarize(text);
+        await summarize(text, abortController.signal);
       }
     } catch (error) {
+      abortController.abort();
       console.error("Error summarizing text", error);
     } finally {
       setIsLoading(false);
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
     }
   };
 
-  const summarizeStreaming = async (text: string) => {
-    if (!summarizerRef.current || !abortControllerRef.current) {
+  const summarizeStreaming = async (text: string, signal: AbortSignal) => {
+    if (!summarizerRef.current) {
       return;
     }
 
-    const stream = summarizerRef.current.summarizeStreaming(text, {
-      signal: abortControllerRef.current.signal,
-    });
-    let streamedSummary = "";
+    const stream = summarizerRef.current.summarizeStreaming(text, { signal });
     const reader = stream.getReader();
 
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        streamedSummary += value;
-        setSummary(streamedSummary);
+        if (done) {
+          break;
+        }
+
+        setSummary((prev) => prev + value);
       }
     } catch (error) {
       console.error("Error summarizing text", error);
@@ -79,14 +77,12 @@ function Summarizer() {
     }
   };
 
-  const summarize = async (text: string) => {
-    if (!summarizerRef.current || !abortControllerRef.current) {
+  const summarize = async (text: string, signal: AbortSignal) => {
+    if (!summarizerRef.current) {
       return;
     }
 
-    const result = await summarizerRef.current.summarize(text, {
-      signal: abortControllerRef.current.signal,
-    });
+    const result = await summarizerRef.current.summarize(text, { signal });
 
     setSummary(result);
   };
