@@ -8,7 +8,7 @@ export interface SummarizerOptions {
   expectedContextLanguages?: string[];
 }
 
-export const getSummarizer = async (signal?: AbortSignal) => {
+export const getSummarizer = async () => {
   const isBrowserSupported = "Summarizer" in self;
   if (!isBrowserSupported) {
     throw new Error("Summarizer API is not supported in this browser");
@@ -37,10 +37,9 @@ export const getSummarizer = async (signal?: AbortSignal) => {
     monitor(monitor) {
       monitor.addEventListener("downloadprogress", (e) => {
         console.log(
-          `Summarizer Download Progress : ${Math.floor(e.loaded * 100)}%`
+          `Summarizer Download Progress : ${Math.floor(e.loaded * 100)}%`,
         );
       });
     },
-    signal,
   });
 };

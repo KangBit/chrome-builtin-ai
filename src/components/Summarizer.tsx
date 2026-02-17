@@ -8,11 +8,12 @@ function Summarizer() {
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState<string>("");
 
-  const USE_STREAMING = false;
+  const USE_STREAMING = true;
 
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
+      summarizerRef.current?.destroy();
     };
   }, []);
 
@@ -30,12 +31,14 @@ function Summarizer() {
       setIsLoading(true);
 
       if (!summarizerRef.current) {
-        abortControllerRef.current = new AbortController();
-
-        summarizerRef.current = await getSummarizer(
-          abortControllerRef.current.signal
-        );
+        summarizerRef.current = await getSummarizer();
       }
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
 
       if (USE_STREAMING) {
         await summarizeStreaming(text);
@@ -46,17 +49,22 @@ function Summarizer() {
       console.error("Error summarizing text", error);
     } finally {
       setIsLoading(false);
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
     }
   };
 
   const summarizeStreaming = async (text: string) => {
-    if (!summarizerRef.current) {
+    if (!summarizerRef.current || !abortControllerRef.current) {
       return;
     }
 
-    const stream = summarizerRef.current.summarizeStreaming(text);
+    const stream = summarizerRef.current.summarizeStreaming(text, {
+      signal: abortControllerRef.current.signal,
+    });
     let streamedSummary = "";
     const reader = stream.getReader();
+
     try {
       while (true) {
         const { done, value } = await reader.read();
@@ -64,17 +72,22 @@ function Summarizer() {
         streamedSummary += value;
         setSummary(streamedSummary);
       }
+    } catch (error) {
+      console.error("Error summarizing text", error);
     } finally {
       reader.releaseLock();
     }
   };
 
   const summarize = async (text: string) => {
-    if (!summarizerRef.current) {
+    if (!summarizerRef.current || !abortControllerRef.current) {
       return;
     }
 
-    const result = await summarizerRef.current.summarize(text);
+    const result = await summarizerRef.current.summarize(text, {
+      signal: abortControllerRef.current.signal,
+    });
+
     setSummary(result);
   };
 
